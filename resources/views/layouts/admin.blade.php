@@ -28,9 +28,9 @@
             @endphp
             @foreach($navigation as [$routeName, $label, $icon])
                 @if(Route::has($routeName))
-                    <a class="flex items-center gap-3 rounded-xl px-4 py-3 transition {{ request()->routeIs($routeName) || request()->routeIs(Str::beforeLast($routeName, '.').'.*') ? 'bg-white text-slate-950' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}" href="{{ route($routeName) }}">
-                        <span class="h-2 w-2 rounded-full {{ request()->routeIs(Str::beforeLast($routeName, '.').'.*') ? 'bg-emerald-500' : 'bg-slate-600' }}"></span>{{ $label }}
-                    </a>
+                    <a class="flex items-center gap-3 rounded-xl px-4 py-3 transition {{ request()->routeIs($routeName) || ($routeName !== 'admin.dashboard' && request()->routeIs(Str::beforeLast($routeName, '.').'.*')) ? 'bg-white text-slate-950' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}" href="{{ route($routeName) }}">
+    <span class="h-2 w-2 rounded-full {{ request()->routeIs($routeName) || ($routeName !== 'admin.dashboard' && request()->routeIs(Str::beforeLast($routeName, '.').'.*')) ? 'bg-emerald-500' : 'bg-slate-600' }}"></span>{{ $label }}
+</a>
                 @endif
             @endforeach
 
