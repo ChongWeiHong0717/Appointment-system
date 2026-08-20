@@ -1,66 +1,462 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Bookwise Appointment Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Bookwise is a Laravel 12 web application for running appointment-based businesses on one shared platform. Each business receives a configurable public website and a private administration area for appointments, customer check-in, services, availability, and website content.
 
-## About Laravel
+The V1 application is intentionally industry-neutral. The same templates and workflows support grooming businesses, salons, beauty studios, clinics, massage centres, dental practices, veterinary businesses, and other service businesses without separate codebases.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## V1 features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Shared-database multi-business architecture with strict `business_id` ownership
+- Unique public URL for each business, such as `/happy-paws`
+- Configurable public homepage, contact details, colours, logo, and hero content
+- Generic category and service management with ordering, visibility, pricing, duration, and images
+- Weekly operating hours and special-date overrides
+- Six-step, mobile-first public booking flow with no customer account required
+- Duration-aware appointment slots that respect closing time and block overlaps
+- Transaction-protected booking creation for both customers and front-desk administrators
+- Authenticated business dashboard with today and upcoming summaries
+- Appointment list with date, status, service, customer, and phone filters
+- Manual appointment creation, details, private notes, and status timeline
+- Front-desk search with formatting-insensitive phone matching and partial names
+- Guarded booked → checked-in → completed workflow, plus cancellation and no-show actions
+- Safe image validation and Laravel public-disk storage
+- Two fully configured demo businesses for tenant-isolation checks
+- Automated tests for booking, availability, authentication, lifecycle rules, and tenant boundaries
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The V1 intentionally does **not** include payments, POS/sales, receipts, staff scheduling, inventory, CRM, memberships, reminders, customer accounts, or multi-branch support. The data and service layers leave clean extension points for these future modules.
 
-## Learning Laravel
+## Technology
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- PHP 8.2+
+- Laravel 12
+- MySQL 8+ or MariaDB 10.6+
+- Blade
+- Tailwind CSS 4
+- Alpine.js 3
+- Vite 6
+- PHPUnit 11
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+SQLite is used by the automated test suite and can also be used for quick local evaluation. MySQL is the intended application database.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Requirements
 
-## Laravel Sponsors
+Install these before starting:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- PHP 8.2 or newer with the extensions Laravel requires, including OpenSSL, PDO, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, and Fileinfo
+- Composer 2
+- Node.js 20 or newer and npm
+- MySQL 8+ or a compatible MariaDB release
+- Git
 
-### Premium Partners
+For uploaded images, the PHP Fileinfo extension must be enabled. Ensure PHP's upload limits are at least 6 MB if hero images will be uploaded.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Local installation
 
-## Contributing
+### 1. Clone and enter the repository
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+git clone https://github.com/ChongWeiHong0717/Appointment-system.git
+cd Appointment-system
+```
 
-## Code of Conduct
+### 2. Install PHP dependencies
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer install
+```
 
-## Security Vulnerabilities
+### 3. Create the environment file
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+On macOS or Linux:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Generate a unique application encryption key:
+
+```bash
+php artisan key:generate
+```
+
+Never commit `.env` or share the generated `APP_KEY`.
+
+### 4. Create and configure MySQL
+
+Create an empty database. For example:
+
+```sql
+CREATE DATABASE appointment_system
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+```
+
+Update these values in `.env`:
+
+```dotenv
+APP_NAME="Bookwise"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=appointment_system
+DB_USERNAME=root
+DB_PASSWORD=your_mysql_password
+```
+
+The database user needs permission to create and alter tables during migration.
+
+### 5. Create tables and demo data
+
+```bash
+php artisan migrate --seed
+```
+
+To completely rebuild a development database later:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+`migrate:fresh` deletes every table in the configured database. Only run it against a disposable local or test database.
+
+### 6. Make uploaded files public
+
+```bash
+php artisan storage:link
+```
+
+Uploads are stored under `storage/app/public/businesses/{business_id}`. The storage link exposes them through `public/storage` without placing uploaded files in source control.
+
+### 7. Install and build frontend assets
+
+```bash
+npm install
+npm run build
+```
+
+For frontend development with live rebuilding:
+
+```bash
+npm run dev
+```
+
+### 8. Start the application
+
+In one terminal:
+
+```bash
+php artisan serve
+```
+
+Open [http://localhost:8000](http://localhost:8000). Keep `npm run dev` running in a second terminal while changing frontend files, or use the production assets generated by `npm run build`.
+
+Laravel also provides a combined development command:
+
+```bash
+composer run dev
+```
+
+It starts the web server, queue listener, log viewer, and Vite process together.
+
+## Demo businesses and accounts
+
+These records are created only by the development/demo seeder. The password is deliberately simple and must never be used in production.
+
+| Business | Public URL | Admin email | Password |
+| --- | --- | --- | --- |
+| Happy Paws Grooming | `/happy-paws` | `admin@happypaws.test` | `password` |
+| Glow Beauty Studio | `/glow-beauty` | `admin@glowbeauty.test` | `password` |
+
+Admin login: `/admin/login`
+
+The seeder also creates `platform@bookwise.test` with password `password` as an architecture placeholder for a future platform administrator. V1 does not expose a platform-admin interface, and this account cannot enter a business workspace.
+
+## Main workflows
+
+### Public booking
+
+1. The customer opens `/{business-slug}`.
+2. They choose a category and active service.
+3. They choose a valid future date.
+4. `AvailabilityService` calculates duration-aware slots from weekly hours, special-date overrides, and active appointments.
+5. The customer supplies a name, phone number, optional email, and optional notes.
+6. `AppointmentBookingService` locks the business row, checks the slot again, creates the appointment, and redirects to a temporary signed confirmation URL.
+
+The final availability check is intentional: it prevents two customers who loaded the same slot moments apart from both booking it.
+
+### Front-desk booking
+
+The **Appointments → New appointment** screen calls the same availability and booking services as the public flow. Manual bookings therefore cannot bypass business hours or create overlaps.
+
+### Check-in and completion
+
+The **Check in** page shows today's schedule by default. A search can match partial names or normalized phone digits, so `0123456789` matches a stored value such as `012-345 6789`.
+
+Allowed V1 transitions are:
+
+```text
+booked ──> checked_in ──> completed
+   ├───────────────> cancelled
+   └───────────────> no_show
+```
+
+Completed, cancelled, no-show, and already checked-in appointments cannot be checked in again. Exact check-in, completion, and cancellation timestamps are stored.
+
+## Architecture
+
+### Business ownership
+
+`businesses` is the tenant root. Business-owned tables carry a foreign-keyed `business_id`, including:
+
+- `users`
+- `website_settings`
+- `categories`
+- `services`
+- `business_hours`
+- `special_dates`
+- `appointments`
+
+Models that belong to a business use `App\Models\Concerns\BelongsToBusiness`, which provides the business relation and an explicit `forBusiness(...)` query scope.
+
+Admin controllers do not trust arbitrary route IDs. They first query through the authenticated user's business relation, such as:
+
+```php
+$appointment = $request->user()
+    ->business
+    ->appointments()
+    ->findOrFail($appointmentId);
+```
+
+Policies provide a second authorization boundary. The `business.user` middleware rejects users without an active business. Form Request rules also scope related IDs, such as category or service IDs, to the authenticated business.
+
+When adding a new module, follow the same rules:
+
+1. Add `business_id` with a foreign key and useful compound indexes.
+2. Add the business relationship and `BelongsToBusiness` concern.
+3. Query business-owned records through the current business or `forBusiness(...)`.
+4. Add a policy and tenant-bound validation for every related ID.
+5. Add a test proving that Business A cannot read or mutate Business B's record.
+
+### Important locations
+
+| Path | Purpose |
+| --- | --- |
+| `app/Models` | Business, catalog, availability, user, and appointment data models |
+| `app/Enums` | Appointment status and user role enums |
+| `app/Services/AvailabilityService.php` | Working windows, slot generation, closing checks, and overlap checks |
+| `app/Services/AppointmentBookingService.php` | Transaction-safe appointment creation shared by public/admin flows |
+| `app/Services/AppointmentLifecycleService.php` | Guarded check-in, completion, cancellation, and no-show transitions |
+| `app/Http/Controllers/Public*` | Public website and booking endpoints |
+| `app/Http/Controllers/Admin` | Tenant-scoped administration and front-desk endpoints |
+| `app/Http/Requests` | Validation and tenant-bound relationship rules |
+| `app/Policies` | Business ownership authorization |
+| `database/migrations` | MySQL-compatible schema and indexes |
+| `database/seeders/DemoDataSeeder.php` | Two-industry demo setup |
+| `resources/views/public` | Template-driven public website and booking UI |
+| `resources/views/admin` | Responsive administration UI |
+| `resources/css/app.css` | Tailwind entry point and shared visual components |
+| `routes/web.php` | Auth, admin, and public slug route groups |
+| `tests` | Unit and feature coverage |
+
+### Availability design
+
+Weekly hours include `period_index`, even though the V1 admin edits only period `0`. The service already reads multiple weekly periods, which leaves a direct path to split hours later. Special dates override the normal weekly windows for one date.
+
+Appointments with `booked` or `checked_in` status consume shared capacity. Completed, cancelled, and no-show appointments do not block a new slot. V1 models one shared appointment capacity per business; future staff or room resources can be introduced inside `AvailabilityService` without rewriting controllers.
+
+### Images
+
+The following uploads are supported:
+
+- business logo
+- homepage hero image
+- category image
+- service image
+
+All image requests validate MIME/type and size. `ImageStorageService` stores new files through Laravel's `public` disk and removes a replaced file only after the new upload succeeds.
+
+## Creating another business
+
+V1 keeps platform administration deliberately small, so new businesses are provisioned in code rather than through a public registration form.
+
+For repeatable development data, copy one of the business setup methods in `database/seeders/DemoDataSeeder.php`, give it a unique name/slug/admin email, and call it from `run()`. Then rebuild the disposable database:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+For production provisioning, create a dedicated private seeder or future platform-admin command that performs these steps in one transaction:
+
+1. Create the `Business` with a unique slug and timezone.
+2. Create its `WebsiteSetting`.
+3. Create seven `BusinessHour` rows for days `0` (Sunday) through `6` (Saturday).
+4. Create a `User` with `role = business_admin` and the new `business_id`.
+5. Send the administrator a temporary password through an approved secure channel.
+
+Do not add production credentials to `DemoDataSeeder` or commit real passwords.
+
+## Testing and quality checks
+
+Run all backend tests:
+
+```bash
+php artisan test
+```
+
+Check PHP formatting without changing files:
+
+```bash
+vendor/bin/pint --test
+```
+
+Apply PHP formatting:
+
+```bash
+vendor/bin/pint
+```
+
+Compile Blade templates and production assets:
+
+```bash
+php artisan view:cache
+npm run build
+```
+
+The test suite uses an in-memory SQLite database configured in `phpunit.xml`. It covers:
+
+- weekly, special-date, duration, and overlap availability
+- public booking and signed confirmations
+- double-booking prevention
+- business authentication
+- catalog and related-ID tenant isolation
+- manual appointment creation
+- check-in phone normalization
+- appointment status transitions
+- business settings isolation
+
+## Production deployment checklist
+
+Exact server setup varies by host, but a typical deployment includes:
+
+1. Point the web server document root to this repository's `public` directory.
+2. Install production PHP dependencies:
+
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   ```
+
+3. Configure production `.env` values:
+
+   ```dotenv
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://your-domain.example
+   LOG_LEVEL=warning
+   ```
+
+4. Use a strong, persistent `APP_KEY`. Do not regenerate it on every deployment.
+5. Configure a dedicated MySQL database user with only the permissions the application needs.
+6. Run migrations:
+
+   ```bash
+   php artisan migrate --force
+   ```
+
+7. Create the storage link:
+
+   ```bash
+   php artisan storage:link
+   ```
+
+8. Build frontend assets on the server or in CI:
+
+   ```bash
+   npm ci
+   npm run build
+   ```
+
+9. Cache production configuration:
+
+   ```bash
+   php artisan optimize
+   ```
+
+10. Give the web-server user write access to `storage` and `bootstrap/cache`, but not the entire repository.
+11. Configure HTTPS, backups for both MySQL and `storage/app/public`, log rotation, and monitoring.
+12. Never run `DemoDataSeeder` in production.
+
+If environment values change after `php artisan optimize`, run `php artisan optimize:clear` and then `php artisan optimize` again.
+
+## Common troubleshooting
+
+### Images return 404
+
+Run:
+
+```bash
+php artisan storage:link
+```
+
+Also confirm that `storage/app/public` is readable and `public/storage` points to it.
+
+### CSS or JavaScript is missing
+
+Install and rebuild assets:
+
+```bash
+npm install
+npm run build
+```
+
+For local live development, keep `npm run dev` running.
+
+### Database connection fails
+
+Check the `DB_*` values in `.env`, confirm MySQL is running, and test that the configured user can access the database. Clear cached configuration after changing `.env`:
+
+```bash
+php artisan config:clear
+```
+
+### No booking slots appear
+
+Check all of the following in the admin area:
+
+- the service and its category are active
+- the service has a sensible duration
+- the selected weekday is open
+- a special date is not closing that date
+- the service can finish before closing
+- existing booked/checked-in appointments do not overlap every possible slot
+
+## Roadmap
+
+Likely future modules include:
+
+- staff roles, permissions, and resource scheduling
+- customer records and CRM
+- sales/POS, receipts, and payment methods
+- online payments
+- notifications and reminders
+- memberships, packages, and loyalty
+- inventory
+- reporting and analytics
+- custom domains and multiple public templates
+- platform-admin provisioning and support tools
+- multi-branch businesses
+
+Appointments remain independent from future sales so completed visits can later create sales without forcing every sale to originate from an appointment.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This repository is currently configured as an MIT-licensed Laravel project. Review the license choice before commercial distribution if a different proprietary arrangement is required.
