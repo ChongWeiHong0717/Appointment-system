@@ -65,12 +65,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('business_id')->constrained()->cascadeOnDelete();
             $table->unsignedTinyInteger('day_of_week');
+            $table->unsignedTinyInteger('period_index')->default(0);
             $table->boolean('is_closed')->default(false);
             $table->time('opens_at')->nullable();
             $table->time('closes_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['business_id', 'day_of_week']);
+            $table->unique(['business_id', 'day_of_week', 'period_index']);
         });
 
         Schema::create('special_dates', function (Blueprint $table) {

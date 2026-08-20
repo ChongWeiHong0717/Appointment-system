@@ -10,10 +10,10 @@ class BusinessHour extends Model
 {
     use BelongsToBusiness, HasFactory;
 
-    protected $fillable = ['business_id', 'day_of_week', 'is_closed', 'opens_at', 'closes_at'];
+    protected $fillable = ['business_id', 'day_of_week', 'period_index', 'is_closed', 'opens_at', 'closes_at'];
 
     protected function casts(): array
     {
-        return ['day_of_week' => 'integer', 'is_closed' => 'boolean'];
+        return ['day_of_week' => 'integer', 'period_index' => 'integer', 'is_closed' => 'boolean'];
     }
 }

@@ -10,3 +10,66 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-stone-50 text-slate-900 antialiased;
+    }
+
+    ::selection {
+        background: color-mix(in srgb, var(--brand, #0f766e) 24%, white);
+    }
+}
+
+@layer components {
+    .brand-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        border-radius: var(--button-radius, .9rem);
+        background: var(--brand, #0f766e);
+        color: white;
+        font-weight: 700;
+        transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+        box-shadow: 0 12px 30px color-mix(in srgb, var(--brand, #0f766e) 20%, transparent);
+    }
+
+    .brand-button:hover {
+        filter: brightness(.93);
+        transform: translateY(-1px);
+    }
+
+    .brand-button:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--accent, #f59e0b) 45%, white);
+        outline-offset: 3px;
+    }
+
+    .brand-button:disabled {
+        cursor: not-allowed;
+        filter: grayscale(.3);
+        opacity: .5;
+        transform: none;
+    }
+
+    .soft-card {
+        @apply rounded-3xl border border-black/5 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.07)];
+    }
+
+    .form-label {
+        @apply mb-2 block text-sm font-bold text-slate-700;
+    }
+
+    .form-input {
+        @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-transparent focus:ring-2;
+        --tw-ring-color: color-mix(in srgb, var(--brand, #0f766e) 55%, white);
+    }
+}
