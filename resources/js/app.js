@@ -79,4 +79,34 @@ Alpine.data('bookingFlow', (config) => ({
     },
 }));
 
+Alpine.data('appointmentForm', (config) => ({
+    serviceId: config.initialService ? Number(config.initialService) : null,
+    appointmentDate: config.initialDate ?? '',
+    startTime: config.initialTime ?? '',
+    slots: [],
+    loading: false,
+    error: '',
+
+    async loadSlots() {
+        this.startTime = '';
+        this.slots = [];
+        this.error = '';
+        if (!this.serviceId || !this.appointmentDate) return;
+
+        this.loading = true;
+        try {
+            const url = new URL(config.slotsUrl, window.location.origin);
+            url.searchParams.set('service_id', this.serviceId);
+            url.searchParams.set('date', this.appointmentDate);
+            const response = await fetch(url, { headers: { Accept: 'application/json' } });
+            if (!response.ok) throw new Error('Unable to load available times.');
+            this.slots = (await response.json()).slots;
+        } catch (error) {
+            this.error = error.message;
+        } finally {
+            this.loading = false;
+        }
+    },
+}));
+
 Alpine.start();

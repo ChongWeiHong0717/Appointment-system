@@ -205,10 +205,10 @@ class DemoDataSeeder extends Seeder
             $service = $services[$index % $services->count()];
             $start = CarbonImmutable::createFromFormat('H:i', $time, $business->timezone);
             $timestamps = match ($status) {
-                AppointmentStatus::CheckedIn => ['checked_in_at' => $today->setTimeFrom($start)->addMinutes(2)],
+                AppointmentStatus::CheckedIn => ['checked_in_at' => $today->setTimeFrom($start)->addMinutes(2)->utc()],
                 AppointmentStatus::Completed => [
-                    'checked_in_at' => $today->setTimeFrom($start),
-                    'completed_at' => $today->setTimeFrom($start)->addMinutes($service->duration_minutes),
+                    'checked_in_at' => $today->setTimeFrom($start)->utc(),
+                    'completed_at' => $today->setTimeFrom($start)->addMinutes($service->duration_minutes)->utc(),
                 ],
                 default => [],
             };

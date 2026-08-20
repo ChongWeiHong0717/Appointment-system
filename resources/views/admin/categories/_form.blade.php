@@ -1,0 +1,9 @@
+<x-admin.form-errors />
+<div class="grid gap-6 sm:grid-cols-2">
+    <div class="sm:col-span-2"><label class="form-label" for="name">Category name</label><input class="form-input" id="name" name="name" value="{{ old('name', $category->name ?? '') }}" required maxlength="120"></div>
+    <div class="sm:col-span-2"><label class="form-label" for="description">Description</label><textarea class="form-input min-h-28" id="description" name="description" maxlength="2000">{{ old('description', $category->description ?? '') }}</textarea></div>
+    <div><label class="form-label" for="sort_order">Display order</label><input class="form-input" id="sort_order" name="sort_order" type="number" min="0" max="9999" value="{{ old('sort_order', $category->sort_order ?? 0) }}" required></div>
+    <div><label class="form-label" for="image">Category image</label><input class="form-input file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-bold" id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp"><p class="mt-2 text-xs text-slate-400">JPG, PNG or WebP, up to 4 MB.</p></div>
+    <label class="flex items-center gap-3 sm:col-span-2"><input type="hidden" name="is_active" value="0"><input class="h-5 w-5 rounded border-slate-300 text-emerald-700 focus:ring-emerald-600" name="is_active" type="checkbox" value="1" @checked(old('is_active', $category->is_active ?? true))><span><span class="block text-sm font-black text-slate-800">Active</span><span class="block text-xs text-slate-500">Show this category on the public website.</span></span></label>
+</div>
+<div class="mt-8 flex items-center justify-end gap-3 border-t border-slate-100 pt-6"><a class="rounded-xl px-5 py-3 text-sm font-black text-slate-500 hover:bg-slate-50" href="{{ route('admin.categories.index') }}">Cancel</a><button class="brand-button px-6 py-3" style="--brand:#047857" type="submit">{{ $submitLabel }}</button></div>
