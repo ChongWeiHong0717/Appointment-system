@@ -21,7 +21,7 @@ class AuthController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
 
-        return redirect()->intended(route('platform.businesses.index'));
+        return redirect()->route('platform.businesses.index');
     }
 
     public function destroy(Request $request): RedirectResponse
