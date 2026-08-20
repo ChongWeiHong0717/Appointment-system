@@ -55,6 +55,8 @@ class PublicBookingController extends Controller
         Business $business,
         AppointmentBookingService $booking
     ): RedirectResponse {
+        abort_unless($business->is_active, 404);
+
         $service = $business->services()
             ->where('is_active', true)
             ->whereHas('category', fn ($query) => $query->where('is_active', true))

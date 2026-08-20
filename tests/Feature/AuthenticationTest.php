@@ -42,4 +42,20 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_disabled_business_admin_cannot_log_in(): void
+    {
+        $business = Business::factory()->create();
+        $admin = User::factory()->for($business)->create([
+            'password' => 'secret-password',
+            'is_active' => false,
+        ]);
+
+        $this->post(route('login.store'), [
+            'email' => $admin->email,
+            'password' => 'secret-password',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
 }

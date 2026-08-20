@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Platform;
 
 use App\Enums\UserRole;
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -24,7 +23,6 @@ class LoginRequest extends FormRequest
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
             'remember' => ['nullable', 'boolean'],
-            'business' => ['nullable', 'string', 'max:160'],
         ];
     }
 
@@ -32,26 +30,19 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $businessSlug = $this->string('business')->toString();
-        $credentials = [
+        $authenticated = Auth::guard('platform')->attempt([
             'email' => $this->string('email')->toString(),
             'password' => $this->string('password')->toString(),
-            'role' => UserRole::BusinessAdmin->value,
+            'role' => UserRole::PlatformAdmin->value,
+            'business_id' => null,
             'is_active' => true,
-            function (Builder $query) use ($businessSlug): void {
-                $query->whereNotNull('business_id')
-                    ->whereHas('business', function (Builder $query) use ($businessSlug): void {
-                        $query->where('is_active', true)
-                            ->when($businessSlug !== '', fn (Builder $query) => $query->where('slug', $businessSlug));
-                    });
-            },
-        ];
+        ], $this->boolean('remember'));
 
-        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
+        if (! $authenticated) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'The supplied credentials do not match our records.',
+                'email' => 'The supplied platform administrator credentials do not match our records.',
             ]);
         }
 
@@ -74,6 +65,6 @@ class LoginRequest extends FormRequest
 
     private function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return 'platform|'.Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
     }
 }

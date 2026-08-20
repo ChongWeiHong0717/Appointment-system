@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'role',
         'password',
+        'is_active',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'is_active' => 'boolean',
         ];
     }
 
@@ -59,5 +61,10 @@ class User extends Authenticatable
     public function isPlatformAdmin(): bool
     {
         return $this->role === UserRole::PlatformAdmin;
+    }
+
+    public function isBusinessAdmin(): bool
+    {
+        return $this->role === UserRole::BusinessAdmin && $this->business_id !== null;
     }
 }

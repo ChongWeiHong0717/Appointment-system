@@ -10,6 +10,9 @@ use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SpecialDateController;
 use App\Http\Controllers\Admin\WebsiteController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Platform\AuthController as PlatformAuthController;
+use App\Http\Controllers\Platform\BusinessAdminController as PlatformBusinessAdminController;
+use App\Http\Controllers\Platform\BusinessController as PlatformBusinessController;
 use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\PublicSiteController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +29,32 @@ Route::middleware('guest')->group(function () {
 Route::post('/admin/logout', [LoginController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
+
+Route::prefix('platform')->name('platform.')->group(function () {
+    Route::middleware('guest:platform')->group(function () {
+        Route::get('login', [PlatformAuthController::class, 'create'])->name('login');
+        Route::post('login', [PlatformAuthController::class, 'store'])->name('login.store');
+    });
+
+    Route::post('logout', [PlatformAuthController::class, 'destroy'])
+        ->middleware('auth:platform')
+        ->name('logout');
+
+    Route::middleware(['auth:platform', 'platform.admin'])->group(function () {
+        Route::get('/', fn () => redirect()->route('platform.businesses.index'))->name('dashboard');
+        Route::get('businesses', [PlatformBusinessController::class, 'index'])->name('businesses.index');
+        Route::get('businesses/create', [PlatformBusinessController::class, 'create'])->name('businesses.create');
+        Route::post('businesses', [PlatformBusinessController::class, 'store'])->name('businesses.store');
+        Route::get('businesses/{business}', [PlatformBusinessController::class, 'show'])->name('businesses.show');
+        Route::patch('businesses/{business}/status', [PlatformBusinessController::class, 'updateStatus'])->name('businesses.status');
+        Route::delete('businesses/{business}', [PlatformBusinessController::class, 'destroy'])->name('businesses.destroy');
+
+        Route::post('businesses/{business}/admins', [PlatformBusinessAdminController::class, 'store'])->name('businesses.admins.store');
+        Route::put('businesses/{business}/admins/{admin}/password', [PlatformBusinessAdminController::class, 'resetPassword'])->name('businesses.admins.password');
+        Route::patch('businesses/{business}/admins/{admin}/status', [PlatformBusinessAdminController::class, 'updateStatus'])->name('businesses.admins.status');
+        Route::delete('businesses/{business}/admins/{admin}', [PlatformBusinessAdminController::class, 'destroy'])->name('businesses.admins.destroy');
+    });
+});
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'business.user'])->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');

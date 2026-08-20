@@ -15,9 +15,9 @@ class EnsureBusinessUser
         $user = $request->user();
 
         abort_unless(
-            $user && $user->business_id && $user->role === UserRole::BusinessAdmin,
+            $user && $user->is_active && $user->business_id && $user->role === UserRole::BusinessAdmin,
             Response::HTTP_FORBIDDEN,
-            'A business administrator account is required.'
+            'An active business administrator account is required.'
         );
 
         $business = $user->business;

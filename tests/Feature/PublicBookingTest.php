@@ -48,7 +48,7 @@ class PublicBookingTest extends TestCase
         $this->get(route('public.home', $this->business))
             ->assertOk()
             ->assertSee($this->business->name)
-            ->assertSee('Signature Service');
+            ->assertSee($this->service->category->name);
     }
 
     public function test_customer_can_book_and_view_a_signed_confirmation(): void
