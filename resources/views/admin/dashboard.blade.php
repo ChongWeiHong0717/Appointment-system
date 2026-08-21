@@ -16,13 +16,22 @@
             @endforeach
         </div>
 
+        @if($staffingSummary['enabled'])
+            <section class="mt-6 rounded-3xl border {{ $staffingSummary['conflicts'] ? 'border-rose-200 bg-rose-50' : 'border-slate-200 bg-white' }} p-6 shadow-sm sm:p-7">
+                <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div><p class="text-xs font-black uppercase tracking-[.18em] {{ $staffingSummary['conflicts'] ? 'text-rose-700' : 'text-emerald-700' }}">Staffing</p><h2 class="mt-2 text-xl font-black text-slate-950">{{ $staffingSummary['conflicts'] ? $staffingSummary['conflicts'].' appointment '.Str::plural('conflict', $staffingSummary['conflicts']) : 'Today is fully staffed' }}</h2><p class="mt-1 text-sm text-slate-500">{{ $staffingSummary['present'] }} present · {{ $staffingSummary['absent'] }} absent · {{ $staffingSummary['active'] }} active workers</p></div><a class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-50" href="{{ route('admin.workers.index', ['date' => $today]) }}">Manage staffing →</a></div>
+            </section>
+        @else
+            <section class="mt-6 rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-sm sm:p-7"><div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div><p class="text-xs font-black uppercase tracking-[.18em] text-violet-700">Parallel booking upgrade</p><h2 class="mt-2 text-xl font-black text-slate-950">Set up workers to unlock capacity-aware bookings</h2><p class="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Until you add an active worker, Bookwise keeps the previous one-appointment-at-a-time availability behaviour.</p></div><a class="brand-button px-5 py-3" style="--brand:#7c3aed" href="{{ route('admin.workers.create') }}">Add first worker</a></div></section>
+        @endif
+
         <section class="mt-8 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-5 sm:px-8"><div><h2 class="text-lg font-black text-slate-950">Today’s schedule</h2><p class="mt-1 text-sm text-slate-500">{{ Carbon\CarbonImmutable::parse($today)->format('l, j F Y') }}</p></div>@if(Route::has('admin.appointments.index'))<a class="text-sm font-black text-emerald-700" href="{{ route('admin.appointments.index', ['scope' => 'today']) }}">View all →</a>@endif</div>
             <div class="divide-y divide-slate-100">
                 @forelse($appointments as $appointment)
+                    @php($staffStatus = $staffingStatuses[$appointment->id] ?? null)
                     <a class="grid gap-4 px-6 py-5 transition hover:bg-slate-50 sm:grid-cols-[100px_1fr_auto] sm:items-center sm:px-8" href="{{ Route::has('admin.appointments.show') ? route('admin.appointments.show', $appointment) : '#' }}">
                         <p class="text-lg font-black text-slate-950">{{ Carbon\CarbonImmutable::parse($appointment->start_time)->format('g:i A') }}</p>
-                        <div><p class="font-black text-slate-900">{{ $appointment->customer_name }}</p><p class="mt-1 text-sm text-slate-500">{{ $appointment->service->name }} · {{ $appointment->customer_phone }}</p></div>
+                        <div><div class="flex flex-wrap items-center gap-2"><p class="font-black text-slate-900">{{ $appointment->customer_name }}</p>@if($staffStatus && $staffStatus['managed'] && ! $staffStatus['healthy'])<span class="rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-black text-rose-700">⚠ Missing {{ $staffStatus['missing'] }} worker</span>@endif</div><p class="mt-1 text-sm text-slate-500">{{ $appointment->service->name }} · {{ $appointment->customer_phone }}@if($staffStatus && $staffStatus['managed'] && $staffStatus['healthy']) · {{ $staffStatus['assigned'] }}/{{ $staffStatus['required'] }} workers @endif</p></div>
                         <span class="inline-flex w-fit rounded-full px-3 py-1 text-xs font-black ring-1 ring-inset {{ $appointment->status->badgeClasses() }}">{{ $appointment->status->label() }}</span>
                     </a>
                 @empty

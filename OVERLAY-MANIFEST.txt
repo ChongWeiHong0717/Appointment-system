@@ -1,0 +1,39 @@
+Bookwise Workers / Capacity Booking Phase 1-3 Overlay
+Target repository: ChongWeiHong0717/Appointment-system
+Target branch: feature/v1-platform
+
+NEW FILES
+- app/Http/Controllers/Admin/WorkerController.php
+- app/Http/Requests/WorkerRequest.php
+- app/Models/Worker.php
+- app/Models/WorkerAbsence.php
+- app/Services/StaffingService.php
+- database/migrations/2026_08_21_000001_add_worker_capacity_booking.php
+- resources/views/admin/workers/_form.blade.php
+- resources/views/admin/workers/create.blade.php
+- resources/views/admin/workers/edit.blade.php
+- resources/views/admin/workers/index.blade.php
+- tests/Feature/WorkerCapacityBookingTest.php
+- WORKERS-PHASE1-3-INSTALL.md
+
+REPLACED FILES
+- routes/web.php
+- app/Http/Controllers/Admin/AppointmentController.php
+- app/Http/Controllers/Admin/DashboardController.php
+- app/Http/Controllers/Admin/ServiceController.php
+- app/Http/Requests/ServiceRequest.php
+- app/Models/Appointment.php
+- app/Models/Business.php
+- app/Models/Service.php
+- app/Services/AppointmentBookingService.php
+- app/Services/AppointmentLifecycleService.php
+- app/Services/AvailabilityService.php
+- resources/views/layouts/admin.blade.php
+- resources/views/admin/appointments/show.blade.php
+- resources/views/admin/dashboard.blade.php
+- resources/views/admin/services/_form.blade.php
+- resources/views/admin/services/index.blade.php
+
+VALIDATION PERFORMED
+- PHP syntax checked with php -l for all PHP files in this overlay.
+- Production migration is additive and does not use migrate:fresh or delete existing appointments/business data.

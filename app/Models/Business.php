@@ -46,6 +46,16 @@ class Business extends Model
         return $this->hasMany(Service::class);
     }
 
+    public function workers(): HasMany
+    {
+        return $this->hasMany(Worker::class);
+    }
+
+    public function workerAbsences(): HasMany
+    {
+        return $this->hasMany(WorkerAbsence::class);
+    }
+
     public function businessHours(): HasMany
     {
         return $this->hasMany(BusinessHour::class);

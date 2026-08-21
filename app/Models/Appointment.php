@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Appointment extends Model
 {
@@ -34,6 +35,11 @@ class Appointment extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class)->withTrashed();
+    }
+
+    public function workers(): BelongsToMany
+    {
+        return $this->belongsToMany(Worker::class, 'appointment_worker')->withTimestamps();
     }
 
     public function startsAt(): CarbonImmutable

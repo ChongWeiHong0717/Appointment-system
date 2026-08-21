@@ -8,6 +8,7 @@ use App\Http\Requests\AdminAppointmentRequest;
 use App\Models\Appointment;
 use App\Services\AppointmentBookingService;
 use App\Services\AvailabilityService;
+use App\Services\StaffingService;
 use App\Support\PhoneNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,7 @@ class AppointmentController extends Controller
         $scope = in_array($request->string('scope')->toString(), ['today', 'upcoming', 'all'], true)
             ? $request->string('scope')->toString()
             : 'today';
-        $query = $business->appointments()->with('service.category');
+        $query = $business->appointments()->with(['service.category', 'workers']);
 
         match ($scope) {
             'today' => $query->whereDate('appointment_date', $today),
@@ -99,12 +100,15 @@ class AppointmentController extends Controller
         return redirect()->route('admin.appointments.show', $appointment)->with('success', 'Appointment created.');
     }
 
-    public function show(Request $request, int $appointment): View
+    public function show(Request $request, int $appointment, StaffingService $staffing): View
     {
-        $appointment = $request->user()->business->appointments()->with('service.category')->findOrFail($appointment);
+        $appointment = $request->user()->business->appointments()
+            ->with(['business', 'service.category', 'workers.services', 'workers.absences'])
+            ->findOrFail($appointment);
         Gate::authorize('view', $appointment);
+        $staffingStatus = $staffing->status($appointment);
 
-        return view('admin.appointments.show', compact('appointment'));
+        return view('admin.appointments.show', compact('appointment', 'staffingStatus'));
     }
 
     public function update(Request $request, int $appointment): RedirectResponse

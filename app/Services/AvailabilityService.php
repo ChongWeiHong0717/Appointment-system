@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AppointmentStatus;
 use App\Models\Business;
 use App\Models\Service;
+use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -29,10 +30,13 @@ class AvailabilityService
             return [];
         }
 
-        $appointments = $business->appointments()
-            ->whereDate('appointment_date', $day->toDateString())
-            ->whereIn('status', [AppointmentStatus::Booked->value, AppointmentStatus::CheckedIn->value])
-            ->get(['start_time', 'end_time']);
+        $workerCapacityEnabled = $this->usesWorkerCapacity($business);
+        $appointments = $workerCapacityEnabled
+            ? collect()
+            : $business->appointments()
+                ->whereDate('appointment_date', $day->toDateString())
+                ->whereIn('status', [AppointmentStatus::Booked->value, AppointmentStatus::CheckedIn->value])
+                ->get(['start_time', 'end_time']);
 
         $interval = max(5, $business->booking_interval_minutes);
         $now = CarbonImmutable::now($business->timezone);
@@ -42,7 +46,15 @@ class AvailabilityService
             for ($cursor = $opensAt; $cursor->addMinutes($service->duration_minutes)->lte($closesAt); $cursor = $cursor->addMinutes($interval)) {
                 $end = $cursor->addMinutes($service->duration_minutes);
 
-                if ($cursor->lte($now) || $this->overlaps($cursor, $end, $appointments, $day)) {
+                if ($cursor->lte($now)) {
+                    continue;
+                }
+
+                if ($workerCapacityEnabled) {
+                    if ($this->availableWorkersForRange($business, $service, $cursor, $end)->count() < max(1, $service->workers_required)) {
+                        continue;
+                    }
+                } elseif ($this->overlaps($cursor, $end, $appointments, $day)) {
                     continue;
                 }
 
@@ -59,7 +71,94 @@ class AvailabilityService
 
     public function isAvailable(Business $business, Service $service, CarbonInterface|string $date, string $startTime): bool
     {
-        return collect($this->slots($business, $service, $date))->contains('value', substr($startTime, 0, 5));
+        return collect($this->slots($business, $service, $date))
+            ->contains('value', substr($startTime, 0, 5));
+    }
+
+    public function usesWorkerCapacity(Business $business): bool
+    {
+        return $business->workers()->where('is_active', true)->exists();
+    }
+
+    /**
+     * Returns qualified, active, present and unbooked workers ordered by
+     * today's workload and then ID so assignment is predictable and balanced.
+     *
+     * @param  array<int, int>  $excludeWorkerIds
+     * @return Collection<int, Worker>
+     */
+    public function availableWorkers(
+        Business $business,
+        Service $service,
+        CarbonInterface|string $date,
+        string $startTime,
+        ?int $ignoreAppointmentId = null,
+        array $excludeWorkerIds = []
+    ): Collection {
+        $this->guardServiceOwnership($business, $service);
+        $day = $this->date($date, $business);
+        $start = $this->atTime($day, $startTime);
+        $end = $start->addMinutes($service->duration_minutes);
+
+        return $this->availableWorkersForRange(
+            $business,
+            $service,
+            $start,
+            $end,
+            $ignoreAppointmentId,
+            $excludeWorkerIds
+        );
+    }
+
+    /**
+     * @param  array<int, int>  $excludeWorkerIds
+     * @return Collection<int, Worker>
+     */
+    public function availableWorkersForRange(
+        Business $business,
+        Service $service,
+        CarbonImmutable $start,
+        CarbonImmutable $end,
+        ?int $ignoreAppointmentId = null,
+        array $excludeWorkerIds = []
+    ): Collection {
+        $this->guardServiceOwnership($business, $service);
+        $day = $start->setTimezone($business->timezone)->startOfDay();
+        $startTime = $start->format('H:i:s');
+        $endTime = $end->format('H:i:s');
+
+        return $business->workers()
+            ->where('is_active', true)
+            ->whereHas('services', fn ($query) => $query->whereKey($service->id))
+            ->when($excludeWorkerIds !== [], fn ($query) => $query->whereNotIn('workers.id', $excludeWorkerIds))
+            ->whereDoesntHave('absences', function ($query) use ($day, $startTime, $endTime) {
+                $query->whereDate('date', $day->toDateString())
+                    ->where(function ($query) use ($startTime, $endTime) {
+                        $query->where(function ($query) {
+                            $query->whereNull('starts_at')->orWhereNull('ends_at');
+                        })->orWhere(function ($query) use ($startTime, $endTime) {
+                            $query->whereNotNull('starts_at')
+                                ->whereNotNull('ends_at')
+                                ->where('starts_at', '<', $endTime)
+                                ->where('ends_at', '>', $startTime);
+                        });
+                    });
+            })
+            ->whereDoesntHave('appointments', function ($query) use ($day, $startTime, $endTime, $ignoreAppointmentId) {
+                $query->whereDate('appointment_date', $day->toDateString())
+                    ->whereIn('status', [AppointmentStatus::Booked->value, AppointmentStatus::CheckedIn->value])
+                    ->when($ignoreAppointmentId, fn ($query) => $query->where('appointments.id', '!=', $ignoreAppointmentId))
+                    ->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
+            })
+            ->withCount(['appointments as day_workload' => function ($query) use ($day, $ignoreAppointmentId) {
+                $query->whereDate('appointment_date', $day->toDateString())
+                    ->whereIn('status', [AppointmentStatus::Booked->value, AppointmentStatus::CheckedIn->value, AppointmentStatus::Completed->value])
+                    ->when($ignoreAppointmentId, fn ($query) => $query->where('appointments.id', '!=', $ignoreAppointmentId));
+            }])
+            ->orderBy('day_workload')
+            ->orderBy('workers.id')
+            ->get();
     }
 
     /**

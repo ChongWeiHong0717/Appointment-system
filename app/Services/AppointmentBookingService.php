@@ -20,6 +20,9 @@ class AppointmentBookingService
         abort_unless($service->business_id === $business->id, 404);
 
         return DB::transaction(function () use ($business, $service, $data) {
+            // This intentionally serializes bookings per business. It is coarse,
+            // but it prevents two simultaneous requests from claiming the same
+            // final worker capacity while keeping the implementation reliable.
             Business::query()->whereKey($business->id)->lockForUpdate()->firstOrFail();
 
             if (! $this->availability->isAvailable($business, $service, $data['appointment_date'], $data['start_time'])) {
@@ -28,12 +31,28 @@ class AppointmentBookingService
                 ]);
             }
 
+            $assignedWorkers = collect();
+            if ($this->availability->usesWorkerCapacity($business)) {
+                $assignedWorkers = $this->availability->availableWorkers(
+                    $business,
+                    $service,
+                    $data['appointment_date'],
+                    $data['start_time']
+                )->take(max(1, (int) $service->workers_required));
+
+                if ($assignedWorkers->count() < max(1, (int) $service->workers_required)) {
+                    throw ValidationException::withMessages([
+                        'start_time' => 'That time is no longer available because there are not enough qualified workers.',
+                    ]);
+                }
+            }
+
             $start = CarbonImmutable::parse(
                 $data['appointment_date'].' '.$data['start_time'],
                 $business->timezone
             );
 
-            return Appointment::create([
+            $appointment = Appointment::create([
                 'business_id' => $business->id,
                 'service_id' => $service->id,
                 'customer_name' => $data['customer_name'],
@@ -47,6 +66,12 @@ class AppointmentBookingService
                 'end_time' => $start->addMinutes($service->duration_minutes)->format('H:i:s'),
                 'status' => AppointmentStatus::Booked,
             ]);
+
+            if ($assignedWorkers->isNotEmpty()) {
+                $appointment->workers()->attach($assignedWorkers->pluck('id')->all());
+            }
+
+            return $appointment->load('workers');
         }, 3);
     }
 }

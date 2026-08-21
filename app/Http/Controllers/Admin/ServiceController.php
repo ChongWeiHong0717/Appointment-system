@@ -7,8 +7,10 @@ use App\Http\Requests\ServiceRequest;
 use App\Models\Service;
 use App\Services\ImageStorageService;
 use App\Services\SlugService;
+use App\Services\StaffingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -18,7 +20,7 @@ class ServiceController extends Controller
     {
         Gate::authorize('viewAny', Service::class);
         $services = $request->user()->business->services()
-            ->with('category')
+            ->with(['category', 'workers'])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -29,45 +31,72 @@ class ServiceController extends Controller
     public function create(Request $request): View
     {
         Gate::authorize('create', Service::class);
-        $categories = $request->user()->business->categories()->orderBy('sort_order')->orderBy('name')->get();
+        $business = $request->user()->business;
+        $categories = $business->categories()->orderBy('sort_order')->orderBy('name')->get();
+        $workers = $business->workers()->orderByDesc('is_active')->orderBy('name')->get();
 
-        return view('admin.services.create', compact('categories'));
+        return view('admin.services.create', compact('categories', 'workers'));
     }
 
-    public function store(ServiceRequest $request, SlugService $slugs, ImageStorageService $images): RedirectResponse
-    {
+    public function store(
+        ServiceRequest $request,
+        SlugService $slugs,
+        ImageStorageService $images,
+        StaffingService $staffing
+    ): RedirectResponse {
         $business = $request->user()->business;
         $data = $request->validated();
-        unset($data['image']);
+        $workerIds = $data['qualified_worker_ids'] ?? [];
+        unset($data['image'], $data['qualified_worker_ids']);
         $data['business_id'] = $business->id;
         $data['slug'] = $slugs->forBusiness(Service::class, $business, $data['name']);
         $data['image_path'] = $images->replace($request->file('image'), null, "businesses/{$business->id}/services");
-        $business->services()->create($data);
+
+        DB::transaction(function () use ($business, $data, $workerIds) {
+            $service = $business->services()->create($data);
+            $service->workers()->sync($workerIds);
+        });
+
+        $staffing->reconcileFutureBusiness($business);
 
         return redirect()->route('admin.services.index')->with('success', 'Service created.');
     }
 
     public function edit(Request $request, int $service): View
     {
-        $service = $request->user()->business->services()->findOrFail($service);
+        $business = $request->user()->business;
+        $service = $business->services()->with('workers')->findOrFail($service);
         Gate::authorize('update', $service);
-        $categories = $request->user()->business->categories()->orderBy('sort_order')->orderBy('name')->get();
+        $categories = $business->categories()->orderBy('sort_order')->orderBy('name')->get();
+        $workers = $business->workers()->orderByDesc('is_active')->orderBy('name')->get();
 
-        return view('admin.services.edit', compact('service', 'categories'));
+        return view('admin.services.edit', compact('service', 'categories', 'workers'));
     }
 
-    public function update(ServiceRequest $request, int $service, SlugService $slugs, ImageStorageService $images): RedirectResponse
-    {
+    public function update(
+        ServiceRequest $request,
+        int $service,
+        SlugService $slugs,
+        ImageStorageService $images,
+        StaffingService $staffing
+    ): RedirectResponse {
         $business = $request->user()->business;
         $service = $business->services()->findOrFail($service);
         Gate::authorize('update', $service);
         $data = $request->validated();
-        unset($data['image']);
+        $workerIds = $data['qualified_worker_ids'] ?? [];
+        unset($data['image'], $data['qualified_worker_ids']);
         $data['slug'] = $slugs->forBusiness(Service::class, $business, $data['name'], $service->id);
         $data['image_path'] = $images->replace($request->file('image'), $service->image_path, "businesses/{$business->id}/services");
-        $service->update($data);
 
-        return redirect()->route('admin.services.index')->with('success', 'Service updated.');
+        DB::transaction(function () use ($business, $service, $data, $workerIds, $staffing) {
+            \App\Models\Business::query()->whereKey($business->id)->lockForUpdate()->firstOrFail();
+            $service->update($data);
+            $service->workers()->sync($workerIds);
+            $staffing->reconcileFutureBusiness($business);
+        }, 3);
+
+        return redirect()->route('admin.services.index')->with('success', 'Service updated. Staffing was recalculated.');
     }
 
     public function destroy(Request $request, int $service, ImageStorageService $images): RedirectResponse

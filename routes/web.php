@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SpecialDateController;
 use App\Http\Controllers\Admin\WebsiteController;
+use App\Http\Controllers\Admin\WorkerController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Platform\AuthController as PlatformAuthController;
 use App\Http\Controllers\Platform\BusinessAdminController as PlatformBusinessAdminController;
@@ -60,6 +61,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'business.user'])->g
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::resource('categories', CategoryController::class)->except('show');
     Route::resource('services', ServiceController::class)->except('show');
+
+    Route::resource('workers', WorkerController::class)->except('show');
+    Route::post('workers/{worker}/absences', [WorkerController::class, 'markAbsent'])->name('workers.absences.store');
+    Route::delete('workers/{worker}/absences/{absence}', [WorkerController::class, 'restoreAbsence'])->name('workers.absences.destroy');
 
     Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');

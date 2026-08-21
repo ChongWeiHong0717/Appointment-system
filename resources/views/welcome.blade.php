@@ -44,6 +44,7 @@
                 <a class="mt-10 inline-flex rounded-xl bg-white px-6 py-4 font-black text-slate-950 shadow-xl transition hover:-translate-y-0.5" href="{{ $dashboardUrl }}">
     {{ $heroButtonLabel }}
 </a>
+
             </div>
             <div class="rounded-[2.5rem] border border-white/15 bg-white/10 p-7 shadow-2xl backdrop-blur-xl sm:p-9">
                 <p class="text-sm font-black uppercase tracking-[.2em] text-emerald-300">Demo websites</p>
